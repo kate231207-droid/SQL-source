@@ -1,0 +1,824 @@
+--Drop Sequence/Table Section; Jane Doe jd123
+DROP TABLE order_details cascade constraints;
+DROP TABLE products cascade constraints;
+DROP TABLE product_category cascade constraints;
+DROP TABLE orders cascade constraints;
+DROP TABLE employees cascade constraints;
+DROP TABLE customer_address cascade constraints;
+DROP TABLE customers cascade constraints;
+
+DROP SEQUENCE address_id_seq;
+DROP SEQUENCE employee_id_seq;
+DROP SEQUENCE category_id_seq;
+DROP SEQUENCE order_detail_id_seq;
+DROP SEQUENCE customer_id_seq;
+DROP SEQUENCE product_id_seq;
+DROP SEQUENCE order_number_seq;
+
+-- Loop to drop all user defined tables, sequences, views, and procs
+BEGIN
+
+  --Deletes all user created tables
+  FOR i IN (SELECT ut.table_name FROM USER_TABLES ut) LOOP
+    EXECUTE IMMEDIATE 'drop table '|| i.table_name ||' CASCADE CONSTRAINTS ';
+  END LOOP;
+  
+    --Deletes all user created sequences
+  FOR i IN (SELECT us.sequence_name FROM USER_SEQUENCES us) LOOP
+    EXECUTE IMMEDIATE 'drop sequence '|| i.sequence_name ||'';
+  END LOOP;
+
+  --Deletes all user created views
+  FOR i IN (select view_name from user_views) LOOP
+    EXECUTE IMMEDIATE 'drop view '|| i.view_name ||' ';
+  END LOOP;
+ 
+ --delete prodcs 
+  FOR i IN (select object_name from user_procedures where object_type = 'PROCEDURE' ) LOOP
+    EXECUTE IMMEDIATE 'drop procedure '||i.object_name ||' ' ;
+  END LOOP;
+  
+END;
+/
+ 
+
+--Create Sequence/Table Section; Jane Doe jd123
+CREATE SEQUENCE customer_id_seq 
+    START WITH 20000
+    INCREMENT BY 1;
+
+CREATE TABLE CUSTOMERS
+(   CUSTOMER_ID     NUMBER      DEFAULT CUSTOMER_ID_SEQ.NEXTVAL      PRIMARY KEY,
+    FIRST_NAME      VARCHAR(50) NOT NULL,
+    LAST_NAME       VARCHAR(50) NOT NULL,
+    EMAIL           VARCHAR(50) NOT NULL    UNIQUE,
+    PRIMARY_PHONE   CHAR(12)    NOT NULL,
+    SECONDARY_PHONE CHAR(12),
+    PASSWORD        VARCHAR(50) NOT NULL,
+    CONSTRAINT PASSWORD_LENGTH_CHECK CHECK (LENGTH(PASSWORD) >= 8)
+);
+
+CREATE SEQUENCE address_id_seq 
+    START WITH 1
+    INCREMENT BY 1;
+
+CREATE TABLE customer_address
+(
+    address_id      NUMBER      DEFAULT address_id_seq.NEXTVAL      PRIMARY KEY,
+    customer_id     NUMBER      NOT NULL        REFERENCES customers(customer_id),
+    address_1       VARCHAR(50) NOT NULL,
+    address_2       VARCHAR(50),
+    city            VARCHAR(50) NOT NULL,
+    STATE           CHAR(2)     NOT NULL,
+    zip             CHAR(5)     NOT NULL,
+    status          CHAR(1)     DEFAULT 'A'     NOT NULL,
+    CONSTRAINT check_status CHECK (status IN ('A','I'))
+);
+
+CREATE SEQUENCE employee_id_seq 
+    START WITH 1
+    INCREMENT BY 1;
+
+CREATE TABLE employees
+(
+    employee_id     NUMBER      DEFAULT employee_id_seq.NEXTVAL      PRIMARY KEY,
+    first_name      VARCHAR(50) NOT NULL,
+    last_name       VARCHAR(50) NOT NULL,
+    birthday        DATE,
+    tax_id_number   VARCHAR(50) NOT NULL    UNIQUE,
+    mailing_address VARCHAR(50) NOT NULL,
+    mailing_city    VARCHAR(50) NOT NULL,
+    mailing_state   CHAR(2)     NOT NULL,
+    mailing_zip     CHAR(5)     NOT NULL
+);
+
+CREATE SEQUENCE order_number_seq 
+    START WITH 10000
+    INCREMENT BY 1;
+
+CREATE TABLE orders
+(
+    order_number    NUMBER      DEFAULT order_number_seq.NEXTVAL      PRIMARY KEY,
+    employee_id     NUMBER      NOT NULL        REFERENCES employees(employee_id),
+    customer_id     NUMBER      NOT NULL        REFERENCES customers(customer_id),
+    address_id      NUMBER      NOT NULL        REFERENCES customer_address(address_id),
+    order_date      DATE        NOT NULL,
+    subtotal        NUMBER      NOT NULL,
+    tax_amount      NUMBER      NOT NULL,
+    invoice_total   NUMBER      NOT NULL,
+    CONSTRAINT check_subtotal CHECK (subtotal > 0),
+    CONSTRAINT check_tax_amount CHECK (tax_amount > 0),
+    CONSTRAINT check_invoice_total CHECK (invoice_total > 0),
+    CONSTRAINT check_invoice_total_subtotal CHECK (invoice_total > subtotal)
+);
+
+CREATE SEQUENCE category_id_seq 
+    START WITH 1
+    INCREMENT BY 1;
+
+CREATE TABLE PRODUCT_CATEGORY
+(   CATEGORY_ID     NUMBER          DEFAULT CATEGORY_ID_SEQ.NEXTVAL      PRIMARY KEY,
+    CATEGORY_NAME   VARCHAR(50)     NOT NULL        UNIQUE,
+    CATEGORY_DESC   VARCHAR(200)    NOT NULL
+);
+
+CREATE SEQUENCE product_id_seq 
+    START WITH 1000
+    INCREMENT BY 1;
+
+CREATE TABLE products
+(   product_id      NUMBER          DEFAULT product_id_seq.NEXTVAL      PRIMARY KEY,
+    category_id     NUMBER          NOT NULL        REFERENCES product_category(category_id),
+    upc             NUMBER(9)       NOT NULL        UNIQUE,
+    product_name    VARCHAR(50)     NOT NULL        UNIQUE,
+    brand           VARCHAR(50)     NOT NULL,
+    product_desc    VARCHAR(200)    NOT NULL,
+    price           NUMBER          NOT NULL,
+    on_hand_amt     NUMBER          NOT NULL
+);
+
+CREATE SEQUENCE order_detail_id_seq 
+    START WITH 1
+    INCREMENT BY 1;
+
+CREATE TABLE order_details
+(   order_detail_id NUMBER      DEFAULT order_detail_id_seq.NEXTVAL      PRIMARY KEY,
+    order_number    NUMBER      NOT NULL        REFERENCES orders(order_number),
+    product_id      NUMBER      NOT NULL        REFERENCES products(product_id),
+    quantity        NUMBER      NOT NULL,
+    CONSTRAINT check_quantity CHECK (quantity > 0)
+);
+
+--This command will turn off user-prompted values triggered by the & symbol
+SET DEFINE OFF;
+
+--INSERT INTO customers
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20000,'Fernandina','McCleary','fmccleary0@shinystat.com','248-391-9522','487-486-2742','A6XwxsRn');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20001,'Jeannette','Douberday','jdouberday1@guardian.co.uk','583-193-5314',null,'xUfneCpDnh');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20002,'Aidan','Farrier','afarrier2@paginegialle.it','305-280-3617',null,'Qs7tFtb1');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20003,'Mitch','Guilloneau','mguilloneau3@furl.net','409-780-8870',null,'0rxjuuBP1ww0');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20004,'Erika','Croxton','ecroxton4@npr.org','617-883-5935',null,'idMkMvU12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20005,'Agathe','Rudloff','arudloff5@parallels.com','535-236-4061',null,'0UwmfqZydICL');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20006,'Shelby','Lesaunier','slesaunier6@clickbank.net','264-107-4670',null,'VD7INjme');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20007,'Burton','Kneebone','bkneebone7@bing.com','574-654-3998',null,'VsvVsBm6flV');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20008,'Susy','Huguet','shuguet8@intel.com','205-101-1844',null,'3MNGFD8wy');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20009,'Audra','Dumphy','adumphy9@economist.com','360-855-6708',null,'42KeLOv0wpo4');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20010,'Kelsey','Goodsir','kgoodsira@ucoz.ru','703-355-5455',null,'dyoz3p11');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20011,'Der','Poupard','dpoupardb@ask.com','419-787-8913',null,'mhjpgLxvs07p');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20012,'Fayth','Perfitt','fperfittc@studiopress.com','978-921-0558',null,'hnPa7ySFbSz0');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20013,'Kori','Stuttman','kstuttmand@goo.ne.jp','200-349-1998','161-586-0598','WTHuaC0Djzx');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20014,'Barnie','Stife','bstifee@hugedomains.com','853-118-6586',null,'MoIpPvbAvDeO');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20015,'Natty','Lillow','nlillowf@weebly.com','734-248-5138',null,'iRqH2qlaMT');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20016,'Thorvald','Geraldini','tgeraldinig@google.com.au','428-655-6858',null,'QfaNFCnpF');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20017,'Nerita','Baselli','nbasellih@goo.gl','720-545-9133',null,'jGFxVow9i9');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20018,'Nickolai','Stephens','nstephensi@boston.com','721-488-6967',null,'VdNY9xjLqESL');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20019,'Webster','Monier','wmonierj@newyorker.com','774-995-8454',null,'DUamwKMNUbt');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20020,'Cheslie','Dunguy','cdunguyk@elpais.com','778-391-5540',null,'pusHVc11');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20021,'Kamila','Lailey','klaileyl@thetimes.co.uk','850-794-4841',null,'qi3U0UN12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20022,'Dilan','Rowter','drowterm@angelfire.com','254-733-2620','754-115-6525','Ug0jWmnn83b');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20023,'Cinderella','Gauche','cgauchen@seattletimes.com','667-104-0008',null,'emkrMxw0');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20024,'Noel','Leaver','nleavero@opensource.org','371-526-3849','995-552-1686','Mh0XseK12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20025,'Carlynne','Fairham','cfairhamp@goo.ne.jp','849-788-7058',null,'Yvh8CqStu');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20026,'Kalle','Stanbrooke','kstanbrookeq@si.edu','571-454-5070','261-751-5141','mHOMEH9A');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20027,'Nike','Regenhardt','nregenhardtr@free.fr','989-243-6610',null,'8RajRj12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20028,'Broddy','Claypole','bclaypoles@sciencedirect.com','386-392-8807','778-970-9673','3SyfwOQ8');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20029,'Wain','Yurenev','wyurenevt@godaddy.com','194-867-6474','948-272-0624','wT15s8z2Zb2x');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20030,'Kassie','Ghiroldi','kghiroldiu@webnode.com','544-980-1818','387-405-4991','TiF0Bck3');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20031,'Far','Wilse','fwilsev@exblog.jp','395-551-1449','167-822-7340','Nib4UIJFJudM');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20032,'Teriann','Grassot','tgrassotw@51.la','975-169-0863',null,'YVmlHkiMC');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20033,'Algernon','Le Fevre','alefevrex@meetup.com','912-229-7227',null,'oGk3Oz12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20034,'Ali','Budgeon','abudgeony@state.tx.us','434-906-3867',null,'0omc2GMa');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20035,'Alysia','Heape','aheapez@naver.com','582-356-3635','695-184-9312','vlJAt5t9');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20036,'Fernanda','Puttergill','fputtergill10@cnet.com','623-581-8379',null,'Ahp5xo12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20037,'Durand','Manis','dmanis11@scribd.com','778-229-4657',null,'axeDVhgRqSEB');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20038,'Wilek','McSpirron','wmcspirron12@plala.or.jp','899-248-8632',null,'UI3O6GYvJvY');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20039,'Farr','Lightollers','flightollers13@tuttocitta.it','751-883-7164','450-144-5755','iBukKg12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20040,'Frederich','Mackley','fmackley14@nhs.uk','262-966-2880','231-186-9110','fBfYbwuhvV4');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20041,'Irwin','Swann','iswann15@home.pl','226-369-1150','588-155-5855','yq3oVa12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20042,'Bert','Rosenwald','brosenwald16@tamu.edu','336-956-2538','483-700-5848','Yikm1fJw4ou');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20043,'Darcey','Pierri','dpierri17@nature.com','272-523-8129','845-944-8676','knlxFgDDeE6c');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20044,'Nettle','Pindar','npindar18@t-online.de','444-693-4661',null,'24cG7sSFB5');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20045,'Portie','Baterip','pbaterip19@noaa.gov','505-837-0680',null,'wjH7BHc12');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20046,'Fritz','Abelson','fabelson1a@psu.edu','728-729-3491',null,'ujn3koqsi');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20047,'Ursala','Wildash','uwildash1b@t.co','814-829-9588',null,'VDeer5Q1');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20048,'Monica','Trousdale','mtrousdale1c@privacy.gov.au','907-438-4869',null,'yVj4Fa3Mf');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20049,'Starr','Korda','skorda1d@tuttocitta.it','852-660-8702',null,'cF2wFcDw0Jxa');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20050,'Claudina','Kobieriecki','ckobieriecki1e@google.nl','922-874-9626',null,'FI8QXr145');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20051,'Zechariah','Fance','zfance1f@engadget.com','843-509-1250','274-104-1028','jwJieUp7');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20052,'Beale','Garza','bgarza1g@tuttocitta.it','109-907-6747','929-547-5741','suYHaHkr0x7n');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20053,'Lorry','Volet','lvolet1h@sitemeter.com','272-997-0944',null,'86wWqLvF');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20054,'Olivero','Towll','otowll1i@wunderground.com','715-623-4631',null,'UG7nl2hTsm');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20055,'Misty','Cabbell','mcabbell1j@blog.com','631-162-3226','717-296-4418','V34E87F!');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20056,'Colette','Atger','catger1k@unblog.fr','810-487-5199',null,'ZggdDiQEXQi');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20057,'Averell','Boorman','aboorman1l@netlog.com','324-576-2426',null,'3Sxs5QoalPLU');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20058,'Hermon','Lappine','hlappine1m@patch.com','220-228-5423',null,'qBehdMRi8lBt');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20059,'Wyn','Suttie','wsuttie1n@weather.com','488-877-0214','445-358-0932','password1');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20060,'Jorgan','Pharo','jpharo1o@scribd.com','507-407-0899','385-195-4015','J5Llwow8W7WQ');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20061,'Barny','Waghorne','bwaghorne1p@apache.org','706-512-0693',null,'cmr6f1BF');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20062,'Alvis','Peyes','apeyes1q@wsj.com','155-296-0867',null,'qCmsN8JF');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20063,'Berenice','Handke','bhandke1r@vkontakte.ru','492-165-5767',null,'KHaIK2n!');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20064,'Herculie','McLae','hmclae1s@economist.com','459-920-0409',null,'7tws9W1AyAVd');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20065,'Corine','Cundey','ccundey1t@wisc.edu','500-795-5905',null,'zDXqpIdM6V8v');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20066,'Drucy','Assante','dassante1u@ed.gov','771-762-1747',null,'MB6YjxA123');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20067,'Shepperd','Ausello','sausello1v@java.com','504-426-1533',null,'YhLnYTWF');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20068,'Denys','Milroy','dmilroy1w@fda.gov','680-736-4706',null,'mYU2xHdfQlm');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20069,'Sioux','Simka','ssimka1x@xing.com','123-796-2306',null,'jh5YGuNXJw');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20070,'Brooke','Aspland','baspland1y@accuweather.com','907-906-3094',null,'bCMEfABSV');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20071,'Malissa','Norcliffe','mnorcliffe1z@simplemachines.org','948-415-4779',null,'UXltA5djGzY');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20072,'Harmonia','Poff','hpoff20@opera.com','399-353-3219',null,'9Edb9cfs');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20073,'Sayre','Linturn','slinturn21@narod.ru','782-234-2209',null,'Y6FXQUVj4lv');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20074,'Ranice','Clougher','rclougher22@aboutads.info','672-300-6385',null,'QUfMeRp6LL');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20075,'Chicky','Spadaro','cspadaro23@reuters.com','207-778-0424','557-712-5570','2N9ttd1!');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20076,'Sibelle','Seymark','sseymark24@hubpages.com','341-225-6507',null,'g17Hg6IX3T');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20077,'Jacobo','Annandale','jannandale25@cam.ac.uk','184-473-3813',null,'LpP68nsP');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20078,'Maximo','McGenn','mmcgenn26@patch.com','157-164-6805',null,'LQfca123');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20079,'Serene','Faich','sfaich27@mac.com','343-270-9082','910-130-6449','ik98KOtW');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20080,'Marieann','Jorck','mjorck28@xinhuanet.com','340-535-8829','774-173-1406','MFUIIpfmrq');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20081,'Berton','Rubega','brubega29@wordpress.org','359-308-9899',null,'9p77F2buUeP');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20082,'Lothario','Duckworth','lduckworth2a@buzzfeed.com','481-332-9289','505-585-8396','pass1234');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20083,'Colene','Pilgram','cpilgram2b@abc.net.au','894-815-6001','114-179-3325','KOm22q9Sjrek');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20084,'Issi','Danilyak','idanilyak2c@sciencedaily.com','278-929-1670',null,'OiBzBXNdQlz0');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20085,'Zelma','Shreeves','zshreeves2d@virginia.edu','633-545-8707',null,'uh3kiUqnhY');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20086,'Beatriz','Sebright','bsebright2e@unblog.fr','322-694-3945',null,'6N2MYshKqN');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20087,'Cynthia','Maddrah','cmaddrah2f@t-online.de','731-323-4281',null,'Mx4MWLhBWh');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20088,'Madelle','Skehens','mskehens2g@opensource.org','776-596-9628',null,'zcml0PmTXAK');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20089,'Rebecka','Negus','rnegus2h@edublogs.org','555-938-7047',null,'YiU1f4n!');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20090,'Shay','Fritche','sfritche2i@tinyurl.com','257-192-0047','318-280-0050','51Q2NV0!');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20091,'Dian','Jirak','djirak2j@yahoo.co.jp','671-573-0677','860-596-1746','zcYmMJ7gSg');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20092,'Francesca','Kirkwood','fkirkwood2k@skyrock.com','111-847-9984',null,'466YXxdf');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20093,'Guss','Hasley','ghasley2l@youtube.com','227-275-7383',null,'hffT4Vr23');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20094,'Erika','Londesborough','elondesborough2m@ca.gov','661-906-3079','447-345-1956','CRa6RTKk!');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20095,'Thaine','Thurby','tthurby2n@deviantart.com','832-453-0350',null,'xEnNcB1lROR');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20096,'Connie','Dungay','cdungay2o@vinaora.com','793-179-6413',null,'KfMANj27nJ');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20097,'Oates','McLorinan','omclorinan2p@bbc.co.uk','643-596-8119','322-728-6699','cxNRURDHS');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20098,'Joellen','Sharkey','jsharkey2q@tinypic.com','906-876-2482',null,'WE23evOQa');
+Insert into CUSTOMERS (CUSTOMER_ID,FIRST_NAME,LAST_NAME,EMAIL,PRIMARY_PHONE,SECONDARY_PHONE,PASSWORD) values (20099,'Meriel','Remon','mremon2r@webmd.com','436-606-7259',null,'WKWGQNl!');
+COMMIT;
+
+
+--INSERT INTO customer_address
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (1,20065,'822 Sutteridge Avenue',null,'Albany','GA','31704','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (2,20015,'6175 Washington Park','Apt 1074','Minneapolis','MN','55407','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (3,20079,'7751 Pennsylvania Alley',null,'Buffalo','NY','14210','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (4,20093,'771 Katie Court',null,'Jamaica','NY','11407','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (5,20036,'1129 Mesta Terrace',null,'Decatur','GA','30089','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (6,20033,'52 Jenifer Place',null,'Dallas','TX','75210','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (7,20028,'1 Sycamore Parkway',null,'Albany','NY','12205','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (8,20073,'97 Butterfield Alley',null,'Whittier','CA','90610','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (9,20042,'52 Summer Ridge Drive',null,'Aurora','IL','60505','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (10,20004,'08 Vahlen Hill',null,'Peoria','IL','61635','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (11,20031,'08 Magdeline Court',null,'Hartford','CT','06160','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (12,20011,'7243 Fairview Crossing','PO Box 46136','Indianapolis','IN','46202','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (13,20002,'89 Ronald Regan Center',null,'Phoenix','AZ','85083','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (14,20084,'88678 Hazelcrest Avenue',null,'Everett','WA','98206','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (15,20002,'652 Straubel Plaza',null,'Washington','DC','20226','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (16,20001,'03691 Commercial Parkway',null,'Dayton','OH','45419','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (17,20016,'2 Parkside Plaza',null,'Littleton','CO','80127','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (18,20079,'3163 Maple Wood Alley','14th Floor','Flushing','NY','11388','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (19,20046,'1999 Autumn Leaf Pass','Apt 555','Alexandria','VA','22301','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (20,20056,'1 Elgar Avenue',null,'San Angelo','TX','76905','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (21,20008,'1 Mandrake Road',null,'Saint Louis','MO','63150','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (22,20002,'4339 Mockingbird Circle',null,'Boise','ID','83727','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (23,20059,'477 5th Avenue',null,'Bloomington','IN','47405','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (24,20030,'0341 Drewry Place',null,'Los Angeles','CA','90030','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (25,20018,'20 Fair Oaks Place','13th Floor','Jamaica','NY','11407','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (26,20092,'37616 Burrows Lane',null,'Gainesville','FL','32605','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (27,20069,'12103 Dayton Trail','20th Floor','Saint Louis','MO','63116','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (28,20027,'0 Esker Park',null,'San Francisco','CA','94105','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (29,20023,'36 Utah Court','Apt 352','Baltimore','MD','21216','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (30,20085,'874 Loomis Way',null,'Columbus','GA','31914','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (31,20026,'60594 Spaight Pass',null,'Alexandria','VA','22313','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (32,20060,'43278 Graedel Center',null,'Minneapolis','MN','55446','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (33,20039,'52 Eliot Parkway',null,'Pasadena','CA','91186','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (34,20004,'53855 Pawling Avenue',null,'Dallas','TX','75210','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (35,20058,'44 Kim Hill',null,'Little Rock','AR','72222','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (36,20047,'62107 Grayhawk Center','PO Box 94234','West Palm Beach','FL','33405','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (37,20098,'29486 Melrose Avenue',null,'San Francisco','CA','94105','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (38,20037,'781 Kinsman Hill',null,'Conroe','TX','77305','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (39,20002,'8110 Haas Pass',null,'Great Neck','NY','11024','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (40,20051,'43645 Lotheville Point',null,'Chattanooga','TN','37416','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (41,20070,'60702 Huxley Junction',null,'Tampa','FL','33625','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (42,20003,'63 Transport Court','PO Box 90609','Lincoln','NE','68510','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (43,20068,'5 Fordem Hill',null,'Miami','FL','33261','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (44,20085,'051 Declaration Point','Room 1713','Mc Keesport','PA','15134','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (45,20069,'9 Monica Lane',null,'Hampton','VA','23668','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (46,20064,'920 Nancy Circle',null,'Philadelphia','PA','19172','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (47,20046,'6 Muir Point',null,'Knoxville','TN','37939','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (48,20034,'276 Hayes Road',null,'Columbia','SC','29203','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (49,20042,'95 Forest Run Alley',null,'Mobile','AL','36641','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (50,20099,'1128 Del Sol Lane','Room 380','Charlotte','NC','28225','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (51,20055,'15898 Loeprich Parkway',null,'Washington','DC','20557','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (52,20005,'69133 Elmside Pass',null,'Tulsa','OK','74116','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (53,20061,'22081 Eliot Pass',null,'Humble','TX','77346','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (54,20062,'8 Banding Crossing',null,'Topeka','KS','66622','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (55,20023,'86 Burning Wood Terrace','Suite 62','San Diego','CA','92176','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (56,20042,'1 Reindahl Avenue',null,'Erie','PA','16505','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (57,20056,'6736 Almo Circle',null,'Pompano Beach','FL','33069','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (58,20062,'2667 Mesta Junction',null,'Kalamazoo','MI','49048','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (59,20023,'1091 Heffernan Lane','17th Floor','Toledo','OH','43610','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (60,20068,'94318 Granby Junction','Apt 38','New Orleans','LA','70129','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (61,20026,'4268 Mitchell Pass',null,'Las Vegas','NV','89120','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (62,20091,'4 Arrowood Junction',null,'Cincinnati','OH','45233','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (63,20019,'3 Ruskin Lane',null,'San Antonio','TX','78255','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (64,20017,'70401 Gulseth Junction',null,'Minneapolis','MN','55412','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (65,20007,'77780 Dunning Terrace',null,'Washington','DC','20226','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (66,20009,'996 Sachs Crossing',null,'Washington','DC','20436','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (67,20047,'9 Bartillon Avenue',null,'Houston','TX','77075','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (68,20026,'8062 Helena Alley',null,'Nashville','TN','37235','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (69,20060,'968 Maple Trail',null,'Pomona','CA','91797','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (70,20091,'128 Crescent Oaks Avenue',null,'Washington','DC','20530','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (71,20097,'21985 Grim Hill','Suite 12','Bronx','NY','10469','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (72,20007,'41 Fisk Plaza',null,'Mesa','AZ','85205','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (73,20039,'18981 Lotheville Way','Suite 79','Saint Paul','MN','55103','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (74,20037,'0 Dorton Plaza','PO Box 59498','Detroit','MI','48295','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (75,20021,'4 Linden Court',null,'Rochester','NY','14609','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (76,20008,'9912 Waubesa Avenue',null,'Santa Barbara','CA','93106','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (77,20039,'12427 Lighthouse Bay Hill',null,'Birmingham','AL','35263','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (78,20084,'2927 Fairview Parkway',null,'Sioux Falls','SD','57105','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (79,20009,'12121 Moland Street',null,'Phoenix','AZ','85035','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (80,20062,'0385 Hoepker Plaza','PO Box 17319','Shawnee Mission','KS','66276','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (81,20046,'9465 Sachs Way',null,'Durham','NC','27710','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (82,20074,'10 Elmside Junction',null,'Panama City','FL','32405','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (83,20096,'5 Nelson Court',null,'Seattle','WA','98195','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (84,20037,'87978 Cambridge Drive',null,'Cleveland','OH','44111','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (85,20035,'67 Anzinger Court',null,'Baton Rouge','LA','70894','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (86,20079,'68 Coolidge Point',null,'Cleveland','OH','44118','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (87,20068,'0 Bultman Park','Room 275','Albany','NY','12205','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (88,20092,'32097 Dawn Parkway','Apt 307','Independence','MO','64054','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (89,20040,'872 Northfield Lane',null,'Sacramento','CA','95838','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (90,20013,'8134 Main Alley','Suite 89','Littleton','CO','80126','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (91,20013,'3 Bultman Way',null,'Hartford','CT','06140','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (92,20065,'6 Kim Drive','Suite 60','Boston','MA','02298','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (93,20077,'09663 Ruskin Avenue','8th Floor','Jersey City','NJ','07305','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (94,20005,'404 Carberry Park',null,'Concord','CA','94522','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (95,20074,'261 Elgar Center',null,'Detroit','MI','48242','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (96,20060,'777 Morningstar Park',null,'New York City','NY','10090','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (97,20075,'675 Gina Drive','Suite 14','South Lake Tahoe','CA','96154','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (98,20001,'2 Eastwood Crossing','6th Floor','Modesto','CA','95397','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (99,20014,'731 Melrose Pass',null,'Mobile','AL','36605','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (100,20005,'50 Wayridge Street',null,'Los Angeles','CA','90040','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (101,20026,'9 Sage Place','PO Box 73876','Oxnard','CA','93034','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (102,20048,'08361 Londonderry Place','12th Floor','San Antonio','TX','78278','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (103,20007,'11 Randy Road',null,'Baton Rouge','LA','70820','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (104,20087,'040 Lotheville Terrace',null,'Jacksonville','FL','32230','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (105,20075,'07014 Bartelt Drive',null,'Grand Rapids','MI','49518','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (106,20086,'221 Algoma Center',null,'Peoria','IL','61640','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (107,20070,'5728 Kingsford Park','Apt 548','Denver','CO','80209','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (108,20087,'7 Fremont Court','Room 1605','El Paso','TX','79984','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (109,20078,'4 Waxwing Court','Suite 69','Clearwater','FL','34620','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (110,20067,'9685 Ilene Parkway',null,'South Bend','IN','46614','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (111,20066,'6 Mallory Alley',null,'Houston','TX','77281','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (112,20052,'8 Florence Hill',null,'Young America','MN','55557','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (113,20099,'600 Melby Hill','PO Box 69847','Bronx','NY','10464','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (114,20015,'7 Memorial Lane',null,'Visalia','CA','93291','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (115,20068,'4674 Gerald Park',null,'Greeley','CO','80638','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (116,20016,'0 Golf Course Way',null,'Fort Wayne','IN','46862','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (117,20049,'21 Fieldstone Center','3rd Floor','Duluth','MN','55805','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (118,20098,'8822 Pleasure Crossing','PO Box 52187','Lubbock','TX','79410','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (119,20007,'04921 Coolidge Avenue',null,'Louisville','KY','40210','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (120,20075,'71795 Transport Avenue',null,'San Diego','CA','92170','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (121,20051,'7 Almo Pass',null,'Boston','MA','02298','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (122,20029,'24987 Ilene Terrace',null,'Washington','DC','20310','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (123,20012,'10 Thompson Crossing',null,'San Jose','CA','95173','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (124,20040,'35856 Bonner Way',null,'Boise','ID','83757','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (125,20042,'6863 Forest Street',null,'Raleigh','NC','27615','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (126,20094,'6 Columbus Avenue','Room 700','Tucson','AZ','85732','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (127,20083,'1729 Dapin Drive',null,'Port Saint Lucie','FL','34985','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (128,20078,'2242 Mandrake Drive','Suite 12','Appleton','WI','54915','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (129,20044,'6 Badeau Crossing','Room 873','Harrisburg','PA','17105','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (130,20087,'9 Eggendart Hill','Apt 55','Houston','TX','77065','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (131,20099,'3854 Northland Point',null,'Clearwater','FL','34615','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (132,20082,'6 Morningstar Place',null,'Staten Island','NY','10305','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (133,20025,'44 Fallview Pass',null,'Chesapeake','VA','23324','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (134,20074,'6644 Miller Road',null,'Omaha','NE','68197','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (135,20009,'7 Alpine Hill','Suite 55','Orange','CA','92668','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (136,20056,'114 Scofield Court','PO Box 5393','Springfield','OH','45505','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (137,20063,'3258 Nelson Crossing',null,'Flushing','NY','11355','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (138,20034,'30 Golf View Junction',null,'Anchorage','AK','99517','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (139,20070,'3 Northport Trail',null,'Greensboro','NC','27415','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (140,20066,'43 Paget Road','Apt 957','El Paso','TX','79994','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (141,20097,'23222 Artisan Lane',null,'Stockton','CA','95219','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (142,20036,'012 Trailsway Pass',null,'Fort Myers','FL','33906','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (143,20064,'96 Northwestern Terrace','PO Box 48132','Fresno','CA','93709','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (144,20023,'18 Londonderry Alley','16th Floor','New Haven','CT','06510','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (145,20090,'6273 Atwood Junction',null,'Corpus Christi','TX','78410','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (146,20084,'87 Hermina Junction','12th Floor','Charlotte','NC','28284','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (147,20032,'81 Autumn Leaf Parkway',null,'Miami','FL','33175','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (148,20037,'8469 Grover Street',null,'Chicago','IL','60646','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (149,20014,'66 5th Junction',null,'Huntington','WV','25705','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (150,20038,'54 Sundown Lane',null,'Saint Paul','MN','55146','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (151,20050,'0 Morningstar Crossing',null,'Milwaukee','WI','53285','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (152,20054,'3862 Lakewood Pass',null,'Baton Rouge','LA','70815','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (153,20070,'38 Laurel Terrace',null,'Kansas City','MO','64125','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (154,20083,'99 Grover Park',null,'Lancaster','PA','17622','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (155,20034,'85476 Moulton Terrace','PO Box 30983','Louisville','KY','40220','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (156,20039,'29 Lindbergh Road','Suite 41','Irving','TX','75037','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (157,20002,'562 Carioca Center',null,'Kansas City','MO','64160','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (158,20025,'07 Talmadge Point',null,'Buffalo','NY','14263','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (159,20055,'74909 Dawn Avenue',null,'Pittsburgh','PA','15230','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (160,20085,'30977 Colorado Crossing',null,'San Jose','CA','95133','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (161,20026,'662 David Junction',null,'Pasadena','TX','77505','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (162,20038,'03 Dahle Parkway','Apt 46','Whittier','CA','90605','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (163,20039,'303 Butterfield Circle',null,'Memphis','TN','38136','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (164,20063,'469 Hayes Hill',null,'Lake Charles','LA','70616','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (165,20064,'4 Mariners Cove Street',null,'Philadelphia','PA','19093','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (166,20076,'03609 Fordem Point',null,'Knoxville','TN','37939','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (167,20039,'68 Rutledge Court','7th Floor','Rochester','NY','14652','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (168,20038,'4 West Lane','PO Box 26311','Omaha','NE','68197','I');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (169,20041,'23 Dottie Park',null,'South Bend','IN','46699','A');
+Insert into CUSTOMER_ADDRESS (ADDRESS_ID,CUSTOMER_ID,ADDRESS_1,ADDRESS_2,CITY,STATE,ZIP,STATUS) values (170,20025,'39621 Fairfield Park',null,'Seattle','WA','98133','I');
+COMMIT;
+
+
+--INSERT INTO employees
+
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (1,'Cinderella','Gauche',to_date('12-JUN-01','DD-MON-RR'),'354345162','36 Utah Court; Apt 352','Baltimore','MD','21216');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (2,'Lothario','Duckworth',to_date('11-NOV-92','DD-MON-RR'),'331239440','6 Morningstar Place','Staten Island','NY','10305');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (3,'Kassie','Ghiroldi',to_date('08-FEB-94','DD-MON-RR'),'809527009','0341 Drewry Place','Los Angeles','CA','90030');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (4,'Hermon','Lappine',to_date('10-OCT-90','DD-MON-RR'),'222728230','44 Kim Hill','Little Rock','AR','72222');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (5,'Ranice','Clougher',to_date('12-MAR-88','DD-MON-RR'),'659868561','10 Elmside Junction','Panama City','FL','32405');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (6,'Berenice','Handke',to_date('08-DEC-96','DD-MON-RR'),'490840735','3258 Nelson Crossing','Flushing','NY','11355');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (7,'Lothario','Duckworth',to_date('08-MAY-87','DD-MON-RR'),'440200053','6 Morningstar Place','Staten Island','NY','10305');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (8,'Berenice','Handke',to_date('05-NOV-92','DD-MON-RR'),'690542451','3258 Nelson Crossing','Flushing','NY','11355');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (9,'Cinderella','Gauche',to_date('06-SEP-84','DD-MON-RR'),'422471577','36 Utah Court; Apt 352','Baltimore','MD','21216');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (10,'Fayth','Perfitt',to_date('09-OCT-85','DD-MON-RR'),'931854342','10 Thompson Crossing','San Jose','CA','95173');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (11,'Fonsie','Temlett',to_date('02-MAY-91','DD-MON-RR'),'644640497','7286 Pierstorff Point','San Diego','CA','92115');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (12,'Aurelia','Ciccone',to_date('02-APR-82','DD-MON-RR'),'244262041','1106 Lyons Lane','Cambridge','MA','02142');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (13,'Lane','Metzig',to_date('10-FEB-87','DD-MON-RR'),'373261367','6 Haas Crossing','Lexington','KY','40524');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (14,'Eadith','Heinel',to_date('08-JUN-91','DD-MON-RR'),'670391661','4419 Northridge Park','Macon','GA','31210');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (15,'Koenraad','Ransome',to_date('09-DEC-96','DD-MON-RR'),'624374882','87 Westerfield Road','Huntsville','AL','35895');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (16,'Aleda','Ungerer',to_date('01-SEP-89','DD-MON-RR'),'441855730','2805 Shasta Lane','Evansville','IN','47705');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (17,'Earvin','Lamputt',to_date('08-OCT-89','DD-MON-RR'),'726307892','97447 Upham Hill','Independence','MO','64054');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (18,'Iago','Dugmore',to_date('02-APR-02','DD-MON-RR'),'376656109','32 Lake View Pass','Austin','TX','78783');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (19,'Evanne','Giovannini',to_date('06-JUN-95','DD-MON-RR'),'286960360','850 Namekagon Court','Jacksonville','FL','32277');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (20,'Wini','Glendza',to_date('08-SEP-83','DD-MON-RR'),'600203198','20 Brentwood Circle','Boise','ID','83711');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (21,'Rowney','Petegree',to_date('08-AUG-97','DD-MON-RR'),'237559983','0 Ohio Street','Saint Louis','MO','63121');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (22,'Gabriell','Ravenhills',to_date('01-SEP-02','DD-MON-RR'),'770844271','1029 Northland Way','Dallas','TX','75251');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (23,'Netty','McJury',to_date('09-MAY-85','DD-MON-RR'),'726790370','52558 East Circle','San Diego','CA','92160');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (24,'Nesta','Vequaud',to_date('10-APR-86','DD-MON-RR'),'460626839','17290 Towne Center','Lubbock','TX','79405');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (25,'Reider','Tebboth',to_date('11-DEC-91','DD-MON-RR'),'343222750','61 Sugar Lane','Saint Paul','MN','55103');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (26,'Brion','Bartholomew',to_date('10-APR-96','DD-MON-RR'),'457768933','8032 Esch Street','Waco','TX','76711');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (27,'Tova','McCracken',to_date('05-FEB-84','DD-MON-RR'),'226209343','0 Moland Drive','Sacramento','CA','95894');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (28,'Kaitlin','Mounter',to_date('04-JUL-89','DD-MON-RR'),'973994166','601 Lake View Drive','Jackson','MS','39204');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (29,'Wyatt','Wippermann',to_date('07-DEC-83','DD-MON-RR'),'360044049','4735 Prentice Road','Indianapolis','IN','46278');
+Insert into EMPLOYEES (EMPLOYEE_ID,FIRST_NAME,LAST_NAME,BIRTHDAY,TAX_ID_NUMBER,MAILING_ADDRESS,MAILING_CITY,MAILING_STATE,MAILING_ZIP) values (30,'Jermaine','Swanton',to_date('06-OCT-83','DD-MON-RR'),'618290398','11787 Elmside Drive','Washington','DC','20260');
+
+COMMIT;
+
+
+
+
+--INSERT INTO product_category
+Insert into PRODUCT_CATEGORY (CATEGORY_ID,CATEGORY_NAME,CATEGORY_DESC) values (1,'Breakfast & Cereal','All things breakfast and food people eat before noon');
+Insert into PRODUCT_CATEGORY (CATEGORY_ID,CATEGORY_NAME,CATEGORY_DESC) values (2,'Candy','Products for when you need to get your sweet tooth fed');
+Insert into PRODUCT_CATEGORY (CATEGORY_ID,CATEGORY_NAME,CATEGORY_DESC) values (3,'Coffee','Coffee and coffee related products');
+Insert into PRODUCT_CATEGORY (CATEGORY_ID,CATEGORY_NAME,CATEGORY_DESC) values (4,'Fresh Produce','Fresh produce or accessories for produce');
+Insert into PRODUCT_CATEGORY (CATEGORY_ID,CATEGORY_NAME,CATEGORY_DESC) values (5,'Pantry','Stuff you commonly find in the middle of the grocery store');
+Insert into PRODUCT_CATEGORY (CATEGORY_ID,CATEGORY_NAME,CATEGORY_DESC) values (6,'Pets','All stuff related to your fur babies. Also scale babies too :)');
+
+
+COMMIT;
+
+
+
+
+--INSERT INTO products
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1000,1,10535151,'Thomas'' Bagels','Thomas''','Thomas'' 100% Whole Wheat Bagels, 6 Pre-Sliced Bagels, 20 Oz',3.98,26);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1001,1,108293065,'Dave''s Bagels','Dave''s Killer Bread','Dave''s Killer Bread Epic Everything Bagels, Organic Bagels, 26g Whole Grains per Bagel, 5 Count',4.83,45);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1002,1,10818666,'Rice Krispies Treats','Kellogg''s','Kellogg''s Rice Krispies Treats Marshmallow Snack Bars, Original, 16 Ct, 12.4 Oz, Box',4.72,27);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1003,1,682792775,'Granola Bars','Nature Valley','Nature Valley Granola Bars, Sweet and Salty Variety Pack, 24 Bars',10.46,39);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1004,1,22145407,'Melting Cheese','Velveeta','Velveeta Original Melting Cheese Dip & Sauce (Classic Size), 32 oz Block',7.98,6);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1005,1,17283459,'Hot Cocoa Mix','Nestle','Nestle Hot Cocoa Rich Milk Chocolate Flavored Mix Powder, 27.7 OZ C 27.7 oz',5.24,32);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1006,1,612927215,'Chocolate Drink Mix','Nesquik','Nesquik Chocolate Flavor Powder Drink Mix Canister 38 oz',8.58,16);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1007,3,10304295,'Instant Cappuccino Mix','Hills Bros. Coffee','Hills Bros. French Vanilla Instant Cappuccino Coffee Drink Mix, 16 Oz Canister',3.72,12);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1008,3,223868627,'Starbucks Ground Coffee','Starbucks','Starbucks Caff Verona, Ground Coffee, Dark Roast, 18 oz',12.48,49);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1009,3,124797647,'Coffee K-pods','Green Mountain Coffee','Green Mountain Coffee Roasters Dark Magic Coffee, Keurig Single-Serve K-Cup pods, Dark Roast, 24 Count',14.92,14);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1010,3,447085211,'Folgers Ground Coffee','Folgers','Folgers Black Silk Ground Coffee, Smooth Dark Roast Coffee, 22.6Ounce Canister',10.32,42);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1011,3,851687089,'DWC Ground Coffee','Death Wish Coffee','Death Wish Coffee, Organic, Fair-Trade, World''s Strongest Coffee, Medium Roast Ground Coffee, 16 Oz, Bag',20.96,49);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1012,1,20606759,'Little Debbie Donuts','Little Debbie','Little Debbie Powdered Mini Donuts (bagged), 10 oz',2,38);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1013,1,20850612,'V8 Splash drink','V8','V8 Splash Berry Blend Flavored Juice Beverage, 64 FL OZ Bottle',2.46,8);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1014,1,12166385,'Ocean Spray Cocktail','Ocean Spray','Ocean Spray Cranberry Juice Cocktail , 64 fl oz',3.24,23);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1015,1,13908715,'Capri Sun','Capri Sun','Capri Sun Roarin'' Waters Strawberry Kiwi Surf Naturally Flavored Water Beverage, 10 ct Box, 6 fl oz Pouches',2.98,44);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1016,1,982281207,'Oatmeal Variety Park','Quaker','Quaker Instant Oatmeal, Variety, 12.1 Oz, 12 Count',3.23,46);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1017,2,911026610,'Niagara Peanut Butter Cups','Niagara','Niagara Chocolates Premium Milk Chocolate Peanut Butter Cups Stand-Up, 4.5 oz',3.48,44);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1018,2,119410885,'Laffy Taffy Cherry','Laffy Taffy','Stretchy & Tangy Laffy Taffy, Cherry Candy 1.5 Oz',1.27,41);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1019,2,397639069,'M&M''S Candy Bars','M&M''S','M&M''s Full Size Chocolate Candy Bars - 30.58oz/18Ct Box',14.48,44);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1020,2,948823185,'Hershey''s C&C Bars','Hershey''s','HERSHEY''S, COOKIES ''N'' CREME Candy Bars, Halloween, 16.2 oz, Jumbo Bag',5.74,49);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1021,2,199672145,'Tic Tac 4-pack','Tic Tac','4 Count, Tic Tac, Fruit Adventure Mints, On-the-Go Refreshment, Great for Halloween Party Favors, 1 oz',3.67,26);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1022,2,14653952,'Twizzlers','Twizzlers','TWIZZLERS, Twists HERSHEY''S Chocolate Chewy Candy, Low Fat, 12 oz, Bag',2.98,33);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1023,2,802706014,'Trolli','Trolli','Trolli Llamas 4.25 oz',1.68,12);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1024,2,853921436,'Nerds gummy clusters','Nerds','Nerds Gummy Clusters Candy Stand Up Bag, 8 Oz',3.48,46);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1025,2,670572561,'Vitamin C Gummies','Spring Valley','Spring Valley Vitamin C, 125 mg Vegetarian Jelly Beans Supplement, 120 Count',9.88,16);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1026,2,619603828,'Biotin Capsules','Spring Valley','Spring Valley Biotin, 5,000 mcg Vegetarian Jelly Beans Supplement, 120 Count',9.88,25);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1027,3,19399944,'Coffeemate Creamer','Coffeemate','Coffee mate Natural Bliss Sweet Cream All Natural Liquid Coffee Creamer 16 fl oz',3.48,30);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1028,3,10307815,'International Delight Coffee HN','International Delight','International Delight Hazelnut Coffee Creamer, 32 Oz.',3.52,11);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1029,3,17056830,'Coffeemate Creamer FV','Coffeemate','Nestle Coffee mate French Vanilla Liquid Coffee Creamer 16 fl oz',2.48,24);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1030,3,10898596,'Land O''Lakes And','Land O''Lakes','Land O Lakes Traditional Half And Half, 1 Quart',3.24,44);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1031,3,467172658,'Great Value Coffee Pods','Great Value','Great Value Medium Roast Cinnamon Vanilla Ground Coffee Pods, 12 Count',4.78,9);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1032,4,44390955,'Bananas','Chiquita','Bananas, one bunch of 5',1.98,23);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1033,4,44390971,'Apple','UNBRANDED','Honeycrisp Apples, single',0.99,20);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1034,4,784759105,'Ranch Dip','Marketside','Vegetable Tray with Buttermilk Ranch Dip, 20 oz',6.97,6);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1035,4,396108153,'Cauliflower','Marketside','Marketside Organic Cauliflower Florets, 12 oz',3.98,25);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1036,5,619501734,'Maple Pancake','Mrs. Butterworth''s','Mrs. Butterworth''s Maple Pancake Syrup, 24 oz.',3.18,34);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1037,5,10295169,'Del Monte Snacks','Del Monte','(4 Cups) Del Monte Diced Peaches Fruit Cup Snacks, 100% Juice, 4 oz',2.72,45);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1038,5,151265496,'Diced Peaches 4-pack','Great Value','Great Value Diced Peaches in 100% Juice, 4 oz, 4 Ct',2.44,16);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1039,5,10291099,'Canned Beets','Libby''s','Libby''s Sliced Beets, Canned Vegetables, 15 oz',1.12,8);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1040,5,20554654,'Curry Powder','Grace','Grace Mild Jamaican Curry Powder, 2 oz',2.12,33);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1041,5,23591198,'Instant Noodles','MAMA','MAMA Oriental Style Instant Noodles Shrimp Flavor (Tom Yum), 2.12 oz',0.48,48);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1042,5,10450989,'White Vinegar','Great Value','Great Value Distilled White Vinegar, 64 fl oz',2.08,49);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1043,5,10308991,'Mayonnaise','McCormick','McCormick Mayonesa (Mayonnaise) With Lime Juice, 28 fl oz',6.48,42);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1044,5,10291103,'Canned Green Beans','Libby''s','Libby''s Canned French Style Green Beans, 14.5 oz',0.98,35);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1045,5,768839095,'Sesame Ginger Salad Topping','Salad Pizazz!','Salad Pizazz! Asian Sesame Ginger Salad Topping, 4oz, Non-GMO, No Artificial Flavors or Colors',2.98,36);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1046,5,29767935,'Noodle Bowl Meal','Annie Chun''s','Annie Chun''s Korean Sweet Chili Noodle Bowl Meal, Shelf Stable, 8 oz',2.98,24);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1047,5,10309153,'Barilla Spaghetti','Barilla','Barilla Spaghetti Pasta 16 oz',1.84,38);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1048,5,10308536,'Chef Boyardee Microwave Beef Ravioli','Chef Boyardee','Chef Boyardee Beef Ravioli in Tomato Sauce, Microwave Pasta, 40 Oz',3.14,45);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1049,5,46330097,'Powdered Peanut Butter','PB2','PB2 Powdered Peanut Butter, 16 oz',8.97,37);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1050,5,922078382,'Sea Salt','Hain Pure Foods','Hain Pure Foods Sea Salt, 21 oz.',2.67,10);
+Insert into PRODUCTS (PRODUCT_ID,CATEGORY_ID,UPC,PRODUCT_NAME,BRAND,PRODUCT_DESC,PRICE,ON_HAND_AMT) values (1051,5,922078383,'Black Pepper','Hain Pure Foods','Black Pepper - Course Ground, 21 oz.',2.67,10);
+COMMIT;
+
+
+
+--INSERT INTO orders
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10000,5,20073,8,to_date('23-FEB-23','DD-MON-RR'),9.46,0.78,10.24);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10001,12,20078,109,to_date('22-FEB-23','DD-MON-RR'),10.32,0.85,11.17);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10002,25,20062,54,to_date('22-FEB-23','DD-MON-RR'),9.84,0.81,10.65);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10003,3,20084,14,to_date('21-FEB-23','DD-MON-RR'),3.14,0.26,3.4);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10004,30,20050,151,to_date('20-FEB-23','DD-MON-RR'),20.16,1.66,21.82);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10005,3,20018,25,to_date('20-FEB-23','DD-MON-RR'),3.24,0.27,3.51);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10006,29,20023,29,to_date('20-FEB-23','DD-MON-RR'),0.98,0.08,1.06);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10007,21,20030,24,to_date('19-FEB-23','DD-MON-RR'),2.54,0.21,2.75);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10008,26,20055,51,to_date('18-FEB-23','DD-MON-RR'),3.48,0.29,3.77);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10009,25,20044,129,to_date('17-FEB-23','DD-MON-RR'),26.96,2.22,29.18);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10010,25,20097,71,to_date('17-FEB-23','DD-MON-RR'),8.94,0.74,9.68);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10011,26,20002,13,to_date('16-FEB-23','DD-MON-RR'),2.46,0.2,2.66);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10012,6,20025,133,to_date('16-FEB-23','DD-MON-RR'),5.46,0.45,5.91);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10013,26,20077,93,to_date('16-FEB-23','DD-MON-RR'),12.48,1.03,13.51);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10014,14,20048,102,to_date('15-FEB-23','DD-MON-RR'),15.84,1.31,17.15);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10015,1,20079,3,to_date('14-FEB-23','DD-MON-RR'),10.32,0.85,11.17);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10016,18,20012,123,to_date('14-FEB-23','DD-MON-RR'),23.43,1.93,25.36);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10017,17,20056,20,to_date('14-FEB-23','DD-MON-RR'),7.55,0.62,8.17);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10018,22,20083,127,to_date('14-FEB-23','DD-MON-RR'),7.9,0.65,8.55);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10019,30,20098,37,to_date('14-FEB-23','DD-MON-RR'),1.98,0.16,2.14);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10020,14,20051,40,to_date('14-FEB-23','DD-MON-RR'),25.74,2.12,27.86);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10021,30,20063,137,to_date('14-FEB-23','DD-MON-RR'),2,0.17,2.17);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10022,13,20096,83,to_date('13-FEB-23','DD-MON-RR'),3.24,0.27,3.51);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10023,19,20008,21,to_date('12-FEB-23','DD-MON-RR'),0.98,0.08,1.06);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10024,17,20085,30,to_date('12-FEB-23','DD-MON-RR'),3.48,0.29,3.77);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10025,19,20001,16,to_date('12-FEB-23','DD-MON-RR'),2.12,0.17,2.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10026,29,20085,30,to_date('11-FEB-23','DD-MON-RR'),11.48,0.95,12.43);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10027,8,20091,62,to_date('10-FEB-23','DD-MON-RR'),9.95,0.82,10.77);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10028,4,20014,99,to_date('09-FEB-23','DD-MON-RR'),3.98,0.33,4.31);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10029,7,20013,90,to_date('08-FEB-23','DD-MON-RR'),12.48,1.03,13.51);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10030,1,20090,145,to_date('07-FEB-23','DD-MON-RR'),0.99,0.08,1.07);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10031,25,20052,112,to_date('06-FEB-23','DD-MON-RR'),10.44,0.86,11.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10032,6,20060,32,to_date('06-FEB-23','DD-MON-RR'),11.93,0.98,12.91);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10033,16,20059,23,to_date('05-FEB-23','DD-MON-RR'),2.72,0.22,2.94);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10034,26,20091,62,to_date('04-FEB-23','DD-MON-RR'),2.98,0.25,3.23);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10035,20,20091,62,to_date('04-FEB-23','DD-MON-RR'),4.1,0.34,4.43);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10036,5,20035,85,to_date('03-FEB-23','DD-MON-RR'),3.18,0.26,3.44);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10037,24,20077,93,to_date('03-FEB-23','DD-MON-RR'),20.92,1.73,22.65);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10038,26,20063,137,to_date('03-FEB-23','DD-MON-RR'),8.97,0.74,9.71);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10039,18,20061,53,to_date('03-FEB-23','DD-MON-RR'),17.72,1.46,19.18);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10040,13,20097,71,to_date('03-FEB-23','DD-MON-RR'),29.64,2.45,32.09);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10041,1,20047,36,to_date('03-FEB-23','DD-MON-RR'),12.96,1.07,14.03);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10042,7,20041,169,to_date('03-FEB-23','DD-MON-RR'),3.98,0.33,4.31);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10043,29,20034,48,to_date('02-FEB-23','DD-MON-RR'),40.98,3.38,44.36);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10044,7,20014,99,to_date('01-FEB-23','DD-MON-RR'),2.12,0.17,2.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10045,25,20018,25,to_date('31-JAN-23','DD-MON-RR'),11.48,0.95,12.43);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10046,19,20014,99,to_date('30-JAN-23','DD-MON-RR'),9.88,0.82,10.7);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10047,18,20063,137,to_date('29-JAN-23','DD-MON-RR'),3.48,0.29,3.77);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10048,11,20087,104,to_date('29-JAN-23','DD-MON-RR'),8.97,0.74,9.71);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10049,17,20052,112,to_date('28-JAN-23','DD-MON-RR'),5.24,0.43,5.67);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10050,12,20067,110,to_date('28-JAN-23','DD-MON-RR'),29.64,2.45,32.09);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10051,14,20001,16,to_date('28-JAN-23','DD-MON-RR'),1.27,0.1,1.37);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10052,30,20042,9,to_date('28-JAN-23','DD-MON-RR'),4.78,0.39,5.17);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10053,11,20047,36,to_date('28-JAN-23','DD-MON-RR'),2.12,0.17,2.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10054,27,20025,133,to_date('27-JAN-23','DD-MON-RR'),1.84,0.15,1.99);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10055,10,20078,109,to_date('26-JAN-23','DD-MON-RR'),2.72,0.22,2.94);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10056,21,20003,42,to_date('25-JAN-23','DD-MON-RR'),19.76,1.63,21.39);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10057,2,20098,37,to_date('24-JAN-23','DD-MON-RR'),0.48,0.04,0.52);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10058,10,20028,7,to_date('24-JAN-23','DD-MON-RR'),3.24,0.27,3.51);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10059,11,20058,35,to_date('24-JAN-23','DD-MON-RR'),3.18,0.26,3.44);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10060,5,20075,97,to_date('23-JAN-23','DD-MON-RR'),2.46,0.2,2.66);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10061,19,20030,24,to_date('22-JAN-23','DD-MON-RR'),10.46,0.86,11.32);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10062,5,20077,93,to_date('22-JAN-23','DD-MON-RR'),5.96,0.49,6.45);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10063,18,20027,28,to_date('21-JAN-23','DD-MON-RR'),10.32,0.85,11.17);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10064,24,20083,127,to_date('20-JAN-23','DD-MON-RR'),10.46,0.86,11.32);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10065,13,20002,13,to_date('20-JAN-23','DD-MON-RR'),2.98,0.25,3.23);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10066,12,20037,38,to_date('20-JAN-23','DD-MON-RR'),8.58,0.71,9.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10067,13,20056,20,to_date('19-JAN-23','DD-MON-RR'),8.94,0.74,9.68);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10068,26,20056,20,to_date('18-JAN-23','DD-MON-RR'),9.66,0.8,10.46);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10069,26,20092,26,to_date('17-JAN-23','DD-MON-RR'),0.48,0.04,0.52);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10070,13,20082,132,to_date('16-JAN-23','DD-MON-RR'),8.58,0.71,9.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10071,18,20084,14,to_date('16-JAN-23','DD-MON-RR'),3.98,0.33,4.31);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10072,26,20028,7,to_date('15-JAN-23','DD-MON-RR'),5.24,0.43,5.67);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10073,8,20001,16,to_date('15-JAN-23','DD-MON-RR'),3.98,0.33,4.31);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10074,26,20029,122,to_date('15-JAN-23','DD-MON-RR'),0.48,0.04,0.52);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10075,30,20058,35,to_date('15-JAN-23','DD-MON-RR'),6.28,0.52,6.8);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10076,22,20013,90,to_date('14-JAN-23','DD-MON-RR'),3.24,0.27,3.51);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10077,14,20015,2,to_date('14-JAN-23','DD-MON-RR'),2.98,0.25,3.23);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10078,19,20019,63,to_date('13-JAN-23','DD-MON-RR'),3.48,0.29,3.77);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10079,26,20084,14,to_date('12-JAN-23','DD-MON-RR'),8.58,0.71,9.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10080,10,20091,62,to_date('12-JAN-23','DD-MON-RR'),9.69,0.8,10.49);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10081,15,20008,21,to_date('12-JAN-23','DD-MON-RR'),1.98,0.16,2.14);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10082,24,20064,46,to_date('11-JAN-23','DD-MON-RR'),18.43,1.52,19.95);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10083,3,20087,104,to_date('11-JAN-23','DD-MON-RR'),14.92,1.23,16.15);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10084,17,20026,31,to_date('10-JAN-23','DD-MON-RR'),0.99,0.08,1.07);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10085,25,20093,4,to_date('10-JAN-23','DD-MON-RR'),2.46,0.2,2.66);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10086,1,20092,26,to_date('10-JAN-23','DD-MON-RR'),4.78,0.39,5.17);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10087,30,20067,110,to_date('09-JAN-23','DD-MON-RR'),7.98,0.66,8.64);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10088,9,20039,33,to_date('08-JAN-23','DD-MON-RR'),20.92,1.73,22.65);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10089,14,20064,46,to_date('08-JAN-23','DD-MON-RR'),2.08,0.17,2.25);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10090,5,20016,17,to_date('08-JAN-23','DD-MON-RR'),3.23,0.27,3.5);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10091,9,20002,13,to_date('08-JAN-23','DD-MON-RR'),2.48,0.2,2.68);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10092,25,20041,169,to_date('08-JAN-23','DD-MON-RR'),13.68,1.13,14.8);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10093,26,20026,31,to_date('07-JAN-23','DD-MON-RR'),2.98,0.25,3.23);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10094,14,20075,97,to_date('07-JAN-23','DD-MON-RR'),1.27,0.1,1.37);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10095,19,20073,8,to_date('07-JAN-23','DD-MON-RR'),2.44,0.2,2.64);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10096,19,20091,62,to_date('06-JAN-23','DD-MON-RR'),2.12,0.17,2.29);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10097,3,20098,37,to_date('06-JAN-23','DD-MON-RR'),4.96,0.41,5.37);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10098,16,20017,64,to_date('05-JAN-23','DD-MON-RR'),3.24,0.27,3.51);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10099,28,20067,110,to_date('04-JAN-23','DD-MON-RR'),2.46,0.2,2.66);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10100,18,20069,27,to_date('03-JAN-23','DD-MON-RR'),43.44,3.58,47.01);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10101,22,20085,30,to_date('03-JAN-23','DD-MON-RR'),3.67,0.3,3.96);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10102,13,20059,23,to_date('03-JAN-23','DD-MON-RR'),1.84,0.15,1.99);
+Insert into ORDERS (ORDER_NUMBER,EMPLOYEE_ID,CUSTOMER_ID,ADDRESS_ID,ORDER_DATE,SUBTOTAL,TAX_AMOUNT,INVOICE_TOTAL) values (10103,17,20034,48,to_date('02-JAN-23','DD-MON-RR'),4.96,0.41,5.37);
+COMMIT;
+
+
+--------update order dates
+--will do this later
+--select sysdate - max(order_date) 
+--from orders;
+
+
+
+--INSERT INTO orders_details
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (1,10000,1022,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (2,10000,1030,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (3,10001,1010,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (4,10002,1027,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (5,10002,1036,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (6,10003,1048,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (7,10004,1017,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (8,10004,1037,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (9,10004,1005,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (10,10005,1030,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (11,10006,1044,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (12,10007,1018,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (13,10008,1017,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (14,10009,1008,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (15,10009,1019,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (16,10010,1015,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (17,10011,1013,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (18,10012,1027,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (19,10013,1005,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (20,10014,1026,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (21,10012,1032,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (22,10013,1012,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (23,10014,1022,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (24,10015,1010,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (25,10016,1026,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (26,10017,1001,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (27,10016,1021,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (28,10017,1037,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (29,10018,1030,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (30,10018,1023,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (31,10018,1046,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (32,10019,1033,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (33,10020,1006,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (34,10021,1012,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (35,10022,1014,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (36,10023,1044,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (37,10024,1024,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (38,10025,1040,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (39,10026,1020,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (40,10027,1046,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (41,10027,1034,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (42,10028,1035,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (43,10029,1008,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (44,10030,1033,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (45,10031,1024,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (46,10032,1035,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (47,10032,1015,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (48,10032,1033,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (49,10033,1037,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (50,10034,1022,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (51,10035,1039,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (52,10035,1022,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (53,10036,1036,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (54,10037,1003,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (55,10038,1049,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (56,10039,1008,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (57,10039,1005,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (58,10040,1025,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (59,10041,1043,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (60,10042,1000,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (61,10043,1049,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (62,10043,1042,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (63,10043,1011,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (64,10044,1040,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (65,10045,1020,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (66,10046,1026,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (67,10047,1017,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (68,10048,1049,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (69,10049,1005,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (70,10050,1026,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (71,10051,1018,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (72,10052,1031,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (73,10053,1040,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (74,10054,1047,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (75,10055,1037,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (76,10056,1026,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (77,10057,1041,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (78,10058,1014,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (79,10059,1036,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (80,10060,1013,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (81,10061,1003,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (82,10062,1045,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (83,10063,1010,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (84,10064,1003,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (85,10065,1046,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (86,10066,1006,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (87,10067,1045,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (88,10068,1001,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (89,10069,1041,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (90,10070,1006,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (91,10071,1000,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (92,10072,1005,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (93,10073,1035,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (94,10074,1041,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (95,10075,1048,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (96,10076,1014,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (97,10077,1046,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (98,10078,1024,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (99,10079,1006,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (100,10080,1016,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (101,10081,1032,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (102,10082,1006,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (103,10082,1018,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (104,10083,1009,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (105,10084,1033,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (106,10085,1013,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (107,10086,1031,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (108,10087,1004,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (109,10088,1003,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (110,10089,1042,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (111,10090,1016,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (112,10091,1029,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (113,10092,1032,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (114,10092,1030,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (115,10093,1045,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (116,10094,1018,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (117,10095,1038,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (118,10096,1040,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (119,10097,1029,2);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (120,10098,1014,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (121,10099,1013,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (122,10100,1019,3);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (123,10101,1021,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (124,10102,1047,1);
+Insert into ORDER_DETAILS (ORDER_DETAIL_ID,ORDER_NUMBER,PRODUCT_ID,QUANTITY) values (125,10103,1029,2);
+
+COMMIT;
+
+--Create Index Section; jane doe jd123 
+CREATE INDEX customer_address_customer_id_ix
+    ON customer_address (customer_id);
+
+CREATE INDEX orders_address_id_ix
+    ON orders (address_id);
+
+CREATE INDEX orders_employee_id_ix
+    ON orders (employee_id);
+
+CREATE INDEX orders_customer_id_ix
+    ON orders (customer_id);
+
+CREATE INDEX order_details_order_number_ix
+    ON order_details (order_number);
+
+CREATE INDEX order_details_product_id_ix
+    ON order_details (product_id);
+
+CREATE INDEX products_category_id_ix
+    ON products (category_id);
+
+--two extra indexes
+CREATE INDEX customers_last_name_id_ix
+    ON customers (last_name);
+
+CREATE INDEX employees_last_name_ix
+    ON employees (last_name);
+    
+--The following sections are add shipped_date and populate values to allow for null shipped dates
+
+alter table orders
+add shipped_date date;
+
+update orders
+set shipped_date = order_date + 6
+where order_date >= '01-JAN-23' and order_date <= '21-FEB-23';
+
+commit;
